@@ -1,0 +1,114 @@
+from PyQt6.QtWidgets import QMainWindow, QFrame, QCheckBox, QLabel, QPushButton
+from PyQt6.QtCore import Qt
+
+class ReminderChoiceWindow(QMainWindow):
+    def __init__(self, app):
+        super().__init__()
+        self.app = app
+        self.setWindowTitle("提醒方式选择")
+        self.resize(800, 600)
+        
+        # 创建中央部件
+        central_widget = QFrame()
+        central_widget.setObjectName("centralwidget")
+        self.setCentralWidget(central_widget)
+        
+        # 创建框架
+        frame = QFrame(central_widget)
+        frame.setGeometry(250, 150, 311, 191)
+        frame.setObjectName("frame")
+        frame.setStyleSheet("""
+            *{ 
+                border-radius:10px; 
+                background-color: rgba(255, 255, 255, 0.8);
+            }
+            QFrame#frame {
+                border-radius: 30px;
+                background-image: url(backgrounds/bg1.jpg);
+                background-repeat: no-repeat;
+                background-position: center;
+                border: 2px solid #e0e0e0;
+            }
+        """)
+        
+        # 添加标签和复选框
+        title_label = QLabel(frame)
+        title_label.setGeometry(85, 20, 141, 31)
+        title_label.setStyleSheet("""
+            *{
+                background-color: rgba(255, 255, 255, 0.7);
+                font: bold 14pt "等线";
+                border-radius:10px;
+                color: #2c3e50;
+                padding: 5px;
+            }
+        """)
+        title_label.setText("选择提醒方式")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # 修正这里
+        
+        self.user_checkbox = QCheckBox(frame)
+        self.user_checkbox.setGeometry(85, 70, 141, 31)
+        self.user_checkbox.setStyleSheet("""
+            *{
+                background-color: rgba(255, 255, 255, 0.85);
+                font: 12pt "等线";
+                border-radius:8px;
+                color: #2c3e50;
+                padding: 5px;
+            }
+            QCheckBox::indicator {
+                width: 20px;
+                height: 20px;
+            }
+        """)
+        self.user_checkbox.setText("用户设置")
+        
+        self.smart_checkbox = QCheckBox(frame)
+        self.smart_checkbox.setGeometry(85, 120, 141, 31)
+        self.smart_checkbox.setStyleSheet("""
+            *{
+                background-color: rgba(255, 255, 255, 0.85);
+                font: 12pt "等线";
+                border-radius:8px;
+                color: #2c3e50;
+                padding: 5px;
+            }
+            QCheckBox::indicator {
+                width: 20px;
+                height: 20px;
+            }
+        """)
+        self.smart_checkbox.setText("智能提醒")
+        
+        # 添加确定按钮
+        confirm_button = QPushButton(central_widget)
+        confirm_button.setGeometry(350, 370, 100, 40)
+        confirm_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                font: bold 12pt "等线";
+                border-radius: 10px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #1d6fa5;
+            }
+        """)
+        confirm_button.setText("确定")
+        confirm_button.clicked.connect(self.navigate_to_selected)
+    
+    def navigate_to_selected(self):
+        if self.user_checkbox.isChecked():
+            from user_set_ui import UserSetWindow
+            self.user_set_window = UserSetWindow(self.app)
+            self.user_set_window.show()
+            self.hide()
+        elif self.smart_checkbox.isChecked():
+            from smart_reminder_ui import SmartReminderWindow
+            self.smart_reminder_window = SmartReminderWindow(self.app)
+            self.smart_reminder_window.show()
+            self.hide()
