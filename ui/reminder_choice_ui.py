@@ -1,13 +1,24 @@
 from PyQt6.QtWidgets import QMainWindow, QFrame, QCheckBox, QLabel, QPushButton
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QMouseEvent
+
 
 class ReminderChoiceWindow(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
+        self.app.add_window(self)
+        self.drag_position = None
+        self.setup_ui()
+        
+    def setup_ui(self):
+        # 窗口设置 - 无边框
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
         self.setWindowTitle("提醒方式选择")
         self.resize(800, 600)
-        
+
         # 创建中央部件
         central_widget = QFrame()
         central_widget.setObjectName("centralwidget")
@@ -103,12 +114,29 @@ class ReminderChoiceWindow(QMainWindow):
     
     def navigate_to_selected(self):
         if self.user_checkbox.isChecked():
-            from user_set_ui import UserSetWindow
+            from ui.user_set_ui import UserSetWindow
             self.user_set_window = UserSetWindow(self.app)
             self.user_set_window.show()
             self.hide()
         elif self.smart_checkbox.isChecked():
-            from smart_reminder_ui import SmartReminderWindow
+            from ui.smart_reminder_ui import SmartReminderWindow
             self.smart_reminder_window = SmartReminderWindow(self.app)
             self.smart_reminder_window.show()
             self.hide()
+    def mousePressEvent(self, event: QMouseEvent):
+        """鼠标按下事件"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        """鼠标移动事件"""
+        if event.buttons() == Qt.MouseButton.LeftButton and self.drag_position:
+            self.move(event.globalPosition().toPoint() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        """鼠标释放事件"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_position = None
+            event.accept()

@@ -1,19 +1,54 @@
 from PyQt6.QtWidgets import QMainWindow, QFrame, QLabel, QLineEdit, QComboBox, QPushButton
 from PyQt6.QtCore import Qt
-from data_analysis import analyze_flower_data
 
 class DataAnalysisWindow(QMainWindow):
-    def __init__(self, app, flower_name=""):
+    def __init__(self, app, flower_name=''):
         super().__init__()
         self.app = app
+        self.app.add_window(self)
+        self.analyzer = app.analyzer  # 使用应用的数据分析器
+        self.setup_ui(flower_name)
+        # 添加拖拽支持
+        self.drag_position = None
+    
+    def setup_ui(self, flower_name):
+        # 窗口设置 - 无边框
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
         self.setWindowTitle("数据分析")
         self.resize(800, 600)
+        
+        def mousePressEvent(self, event):
+            """鼠标按下事件"""
+            if event.button() == Qt.MouseButton.LeftButton:
+        # 记录鼠标按下时的位置
+                self.drag_position = event.globalPosition().toPoint()
+                event.accept()
+
+    def mouseMoveEvent(self, event):
+        """鼠标移动事件"""
+        if self.drag_position:
+            # 计算窗口需要移动的偏移量
+            delta = event.globalPosition().toPoint() - self.drag_position
+            self.move(self.pos() + delta)
+            self.drag_position = event.globalPosition().toPoint()
+            event.accept()
+
+        def mouseReleaseEvent(self, event):
+            """鼠标释放事件"""
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.drag_position = None
+            event.accept()
         
         # 创建中央部件
         central_widget = QFrame()
         central_widget.setObjectName("centralwidget")
         central_widget.setStyleSheet("""
-            background-color: #ecf0f1;
+            QFrame#centralwidget {
+                background-color: #ecf0f1;
+                border-radius: 15px;
+            }
         """)
         self.setCentralWidget(central_widget)
         
@@ -40,10 +75,6 @@ class DataAnalysisWindow(QMainWindow):
         frame.setGeometry(150, 80, 501, 401)
         frame.setObjectName("frame")
         frame.setStyleSheet("""
-            *{ 
-                border-radius:10px; 
-                background-color: rgba(255, 255, 255, 0.9);
-            }
             QFrame#frame {
                 border-radius: 30px;
                 background-image: url(backgrounds/bg4.jpg);
@@ -66,7 +97,7 @@ class DataAnalysisWindow(QMainWindow):
             }
         """)
         title_label.setText("数据记录与统计分析")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # 修正这里
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # 鲜花种类设置
         flower_label = QLabel(frame)
@@ -161,24 +192,30 @@ class DataAnalysisWindow(QMainWindow):
         analyze_button.clicked.connect(self.perform_analysis)
     
     def perform_analysis(self):
-        flower_name = self.flower_input.text()
+        """执行数据分析"""
+        flower_name = self.flower_input.text().strip()
         factor = self.factor_combo.currentText()
-        if flower_name:
-            # 执行数据分析
-            result = analyze_flower_data(flower_name, factor)
-            
-            # 显示结果
-            if result.get("error"):
-                self.result_text.setText("错误：未找到相关数据")
-            else:
-                result_text = f"鲜花: {flower_name}\n"
-                result_text += f"因素: {factor}\n"
-                result_text += f"最优值: {result['optimal']}\n"
-                result_text += f"建议间隔: {result['interval']}天"
-                self.result_text.setText(result_text)
+        
+        if not flower_name:
+            self.result_text.setText("错误: 请填写鲜花名称")
+            return
+        
+        # 执行数据分析
+        result = self.analyzer.analyze_flower_data(flower_name, factor)
+        
+        # 显示结果
+        result_text = f"鲜花: {flower_name}\n"
+        result_text += f"因素: {factor}\n"
+        result_text += f"最优值: {result['optimal']}\n"
+        result_text += f"建议间隔: {result['interval']}天"
+        
+        self.result_text.setText(result_text)
+
+
     
     def go_back(self):
-        from smart_reminder_ui import SmartReminderWindow
+        """返回智能提醒窗口"""
+        from .smart_reminder_ui import SmartReminderWindow
         self.smart_window = SmartReminderWindow(self.app)
         self.smart_window.show()
         self.hide()
