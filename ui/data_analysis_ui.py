@@ -1,45 +1,25 @@
 from PyQt6.QtWidgets import QMainWindow, QFrame, QLabel, QLineEdit, QComboBox, QPushButton
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QMouseEvent
+from core.data_analysis import FlowerDataAnalyzer
 
 class DataAnalysisWindow(QMainWindow):
     def __init__(self, app, flower_name=''):
         super().__init__()
         self.app = app
-        self.app.add_window(self)
         self.analyzer = app.analyzer  # 使用应用的数据分析器
-        self.setup_ui(flower_name)
-        # 添加拖拽支持
-        self.drag_position = None
+        self.flower_name = flower_name  # 保存传入的鲜花名称
+        self.setup_ui()
+        self.drag_start_position = None
+        self.drag_window_position = None
     
-    def setup_ui(self, flower_name):
+    def setup_ui(self):
         # 窗口设置 - 无边框
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
         self.setWindowTitle("数据分析")
         self.resize(800, 600)
-        
-        def mousePressEvent(self, event):
-            """鼠标按下事件"""
-            if event.button() == Qt.MouseButton.LeftButton:
-        # 记录鼠标按下时的位置
-                self.drag_position = event.globalPosition().toPoint()
-                event.accept()
-
-    def mouseMoveEvent(self, event):
-        """鼠标移动事件"""
-        if self.drag_position:
-            # 计算窗口需要移动的偏移量
-            delta = event.globalPosition().toPoint() - self.drag_position
-            self.move(self.pos() + delta)
-            self.drag_position = event.globalPosition().toPoint()
-            event.accept()
-
-        def mouseReleaseEvent(self, event):
-            """鼠标释放事件"""
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.drag_position = None
-            event.accept()
         
         # 创建中央部件
         central_widget = QFrame()
@@ -105,22 +85,28 @@ class DataAnalysisWindow(QMainWindow):
         flower_label.setStyleSheet("""
             *{
                 background-color: rgba(255, 255, 255, 0.7);
-                font: 11pt "等线";
+                font: 11极 "等线";
                 border-radius:5px;
                 padding: 3px;
             }
         """)
         flower_label.setText("鲜花种类:")
         
-        self.flower_input = QLineEdit(frame)
-        self.flower_input.setGeometry(160, 100, 171, 25)
-        self.flower_input.setStyleSheet("""
+        self.flower_combo = QComboBox(frame)
+        self.flower_combo.setGeometry(160, 100, 171, 25)
+        self.flower_combo.setStyleSheet("""
             background-color: rgba(255, 255, 255, 0.85);
             border: 1px solid #bdc3c7;
             border-radius: 5px;
             padding: 5px;
         """)
-        self.flower_input.setText(flower_name or "输入鲜花名称...")
+        self.flower_combo.addItems(self.app.flower_types)
+        
+        # 如果初始化时传入了flower_name，则设置当前选中
+        if self.flower_name:
+            index = self.flower_combo.findText(self.flower_name)
+            if index >= 0:
+                self.flower_combo.setCurrentIndex(index)
         
         # 影响因素选择
         factor_label = QLabel(frame)
@@ -182,7 +168,7 @@ class DataAnalysisWindow(QMainWindow):
                 color: white;
                 font: bold 12pt "等线";
                 border-radius: 10px;
-                padding: 5px;
+                padding: 8px 16px;
             }
             QPushButton:hover {
                 background-color: #27ae60;
@@ -193,12 +179,14 @@ class DataAnalysisWindow(QMainWindow):
     
     def perform_analysis(self):
         """执行数据分析"""
-        flower_name = self.flower_input.text().strip()
-        factor = self.factor_combo.currentText()
-        
+        # 从组合框中获取当前选择的鲜花名称
+        flower_name = self.flower_combo.currentText().strip()
         if not flower_name:
-            self.result_text.setText("错误: 请填写鲜花名称")
+            self.result_text.setText("错误: 请选择鲜花种类！")
             return
+        
+        # 获取当前选择的因素
+        factor = self.factor_combo.currentText()
         
         # 执行数据分析
         result = self.analyzer.analyze_flower_data(flower_name, factor)
@@ -210,8 +198,6 @@ class DataAnalysisWindow(QMainWindow):
         result_text += f"建议间隔: {result['interval']}天"
         
         self.result_text.setText(result_text)
-
-
     
     def go_back(self):
         """返回智能提醒窗口"""
@@ -219,3 +205,25 @@ class DataAnalysisWindow(QMainWindow):
         self.smart_window = SmartReminderWindow(self.app)
         self.smart_window.show()
         self.hide()
+    
+    # 添加窗口拖动功能
+    def mousePressEvent(self, event: QMouseEvent):
+        """鼠标按下事件"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_start_position = event.globalPosition().toPoint()
+            self.drag_window_position = self.pos()
+            event.accept()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        """鼠标移动事件"""
+        if event.buttons() == Qt.MouseButton.LeftButton and self.drag_start_position:
+            delta = event.globalPosition().toPoint() - self.drag_start_position
+            self.move(self.drag_window_position + delta)
+            event.accept()
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        """鼠标释放事件"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_start_position = None
+            self.drag_window_position = None
+            event.accept()

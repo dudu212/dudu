@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import QMainWindow, QFrame, QCheckBox, QLabel, QPushButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QMouseEvent
-
+from ui.user_set_ui import UserSetWindow  # 添加导入
+from ui.smart_reminder_ui import SmartReminderWindow  # 添加导入
 
 class ReminderChoiceWindow(QMainWindow):
     def __init__(self, app):
@@ -10,6 +11,16 @@ class ReminderChoiceWindow(QMainWindow):
         self.app.add_window(self)
         self.drag_position = None
         self.setup_ui()
+
+        # 添加测试弹窗按钮
+        self.test_button = QPushButton("测试弹窗", self)
+        self.test_button.setGeometry(300, 300, 100, 30)
+        self.test_button.clicked.connect(self.test_popup)
+
+
+    def test_popup(self):
+        """测试弹窗功能"""
+        self.app.test_popup_display()
         
     def setup_ui(self):
         # 窗口设置 - 无边框
@@ -22,6 +33,12 @@ class ReminderChoiceWindow(QMainWindow):
         # 创建中央部件
         central_widget = QFrame()
         central_widget.setObjectName("centralwidget")
+        central_widget.setStyleSheet("""
+            QFrame#centralwidget {
+                background-color: #ecf0f1;
+                border-radius: 15px;
+            }
+        """)
         self.setCentralWidget(central_widget)
         
         # 创建框架
@@ -29,15 +46,10 @@ class ReminderChoiceWindow(QMainWindow):
         frame.setGeometry(250, 150, 311, 191)
         frame.setObjectName("frame")
         frame.setStyleSheet("""
-            *{ 
-                border-radius:10px; 
-                background-color: rgba(255, 255, 255, 0.8);
-            }
             QFrame#frame {
                 border-radius: 30px;
+                background-color: rgba(255, 255, 255, 0.8);
                 background-image: url(backgrounds/bg1.jpg);
-                background-repeat: no-repeat;
-                background-position: center;
                 border: 2px solid #e0e0e0;
             }
         """)
@@ -55,7 +67,7 @@ class ReminderChoiceWindow(QMainWindow):
             }
         """)
         title_label.setText("选择提醒方式")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # 修正这里
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.user_checkbox = QCheckBox(frame)
         self.user_checkbox.setGeometry(85, 70, 141, 31)
@@ -111,18 +123,22 @@ class ReminderChoiceWindow(QMainWindow):
         """)
         confirm_button.setText("确定")
         confirm_button.clicked.connect(self.navigate_to_selected)
+        
+
     
     def navigate_to_selected(self):
+        """导航到选定的界面"""
         if self.user_checkbox.isChecked():
-            from ui.user_set_ui import UserSetWindow
+            # 确保正确导入 UserSetWindow
             self.user_set_window = UserSetWindow(self.app)
             self.user_set_window.show()
             self.hide()
         elif self.smart_checkbox.isChecked():
-            from ui.smart_reminder_ui import SmartReminderWindow
+            # 确保正确导入 SmartReminderWindow
             self.smart_reminder_window = SmartReminderWindow(self.app)
             self.smart_reminder_window.show()
             self.hide()
+    
     def mousePressEvent(self, event: QMouseEvent):
         """鼠标按下事件"""
         if event.button() == Qt.MouseButton.LeftButton:
@@ -140,3 +156,4 @@ class ReminderChoiceWindow(QMainWindow):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_position = None
             event.accept()
+

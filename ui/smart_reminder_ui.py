@@ -1,8 +1,9 @@
-from PyQt6.QtWidgets import QMainWindow, QFrame, QLabel, QPushButton, QDateTimeEdit, QComboBox
+from PyQt6.QtWidgets import QMainWindow, QFrame, QLabel, QPushButton, QDateTimeEdit, QComboBox, QLineEdit
 from PyQt6.QtCore import Qt, QDateTime
-from PyQt6.QtGui import QIcon, QMouseEvent
+from PyQt6.QtGui import QMouseEvent
 from core.data_analysis import FlowerDataAnalyzer
 from core.reminder_system import FlowerCareReminderSystem
+from datetime import datetime
 
 class SmartReminderWindow(QMainWindow):
     def __init__(self, app):
@@ -30,6 +31,7 @@ class SmartReminderWindow(QMainWindow):
                 background-color: #ecf0f1;
                 border-radius: 15px;
                 border: 1px solid #bdc3c7;
+                background-image: url(backgrounds/bg3.jpg);
             }
         """)
         self.setCentralWidget(central_widget)
@@ -81,20 +83,20 @@ class SmartReminderWindow(QMainWindow):
         title_label.setText("智能提醒")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # 鲜花种类设置 - 使用选择框
+        # 鲜花种类设置
         flower_label = QLabel(frame)
         flower_label.setGeometry(50, 70, 101, 25)
         flower_label.setStyleSheet("""
             *{
                 background-color: rgba(255, 255, 255, 0.7);
-                font: 11pt "等线";
+                font: 11pt "等极";
                 border-radius:5px;
                 padding: 3px;
             }
         """)
         flower_label.setText("鲜花种类:")
         
-        # 使用下拉选择框选择鲜花种类
+        # 鲜花选择下拉框
         self.flower_combo = QComboBox(frame)
         self.flower_combo.setGeometry(160, 70, 171, 25)
         self.flower_combo.setStyleSheet("""
@@ -103,14 +105,13 @@ class SmartReminderWindow(QMainWindow):
             border-radius: 5px;
             padding: 5px;
         """)
-        
-        # 从主应用获取鲜花种类列表
         self.flower_combo.addItems(self.app.flower_types)
 
         # 添加新种类按钮
         self.add_flower_button = QPushButton(frame)
         self.add_flower_button.setGeometry(340, 70, 31, 25)
         self.add_flower_button.setStyleSheet("""
+
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -138,7 +139,7 @@ class SmartReminderWindow(QMainWindow):
         
         # 时间设置
         time_label = QLabel(frame)
-        time_label.setGeometry(50, 140, 101, 25)  # 调整位置
+        time_label.setGeometry(50, 140, 101, 25)
         time_label.setStyleSheet("""
             *{
                 background-color: rgba(255, 255, 255, 0.7);
@@ -150,7 +151,7 @@ class SmartReminderWindow(QMainWindow):
         time_label.setText("起始时间:")
         
         self.time_edit = QDateTimeEdit(frame)
-        self.time_edit.setGeometry(160, 140, 171, 25)  # 调整位置
+        self.time_edit.setGeometry(160, 140, 171, 25)
         self.time_edit.setStyleSheet("""
             background-color: rgba(255, 255, 255, 0.85);
             border: 1px solid #bdc3c7;
@@ -159,13 +160,13 @@ class SmartReminderWindow(QMainWindow):
         """)
         self.time_edit.setDateTime(QDateTime.currentDateTime())
         
-        # 推荐间隔天数
+        # 推荐间隔
         interval_label = QLabel(frame)
-        interval_label.setGeometry(50, 180, 101, 25)  # 调整位置
+        interval_label.setGeometry(50, 180, 101, 25)
         interval_label.setStyleSheet("""
             *{
                 background-color: rgba(255, 255, 255, 0.7);
-                font: 11pt "极线";
+                font: 11pt "等线";
                 border-radius:5px;
                 padding: 3px;
             }
@@ -173,18 +174,18 @@ class SmartReminderWindow(QMainWindow):
         interval_label.setText("推荐间隔:")
         
         self.interval_combo = QComboBox(frame)
-        self.interval_combo.setGeometry(160, 180, 171, 25)  # 调整位置
+        self.interval_combo.setGeometry(160, 180, 171, 25)
         self.interval_combo.setStyleSheet("""
             background-color: rgba(255, 255, 255, 0.85);
             border: 1px solid #bdc3c7;
-            border-radius: 5极;
+            border-radius: 5px;
             padding: 5px;
         """)
-        self.interval_combo.setEnabled(False)  # 用户不能直接编辑
+        self.interval_combo.setEnabled(False)
         
-        # 添加分析按钮
+        # 分析按钮
         self.analyze_button = QPushButton(frame)
-        self.analyze_button.setGeometry(160, 230, 101, 31)  # 调整位置
+        self.analyze_button.setGeometry(160, 230, 101, 31)
         self.analyze_button.setStyleSheet("""
             QPushButton {
                 background-color: #2ecc71;
@@ -200,9 +201,9 @@ class SmartReminderWindow(QMainWindow):
         self.analyze_button.setText("分析数据")
         self.analyze_button.clicked.connect(self.analyze_flower)
         
-        # 添加保存按钮
+        # 保存按钮
         self.save_button = QPushButton(frame)
-        self.save_button.setGeometry(280, 230, 101, 31)  # 调整位置
+        self.save_button.setGeometry(280, 230, 101, 31)
         self.save_button.setStyleSheet("""
             QPushButton {
                 background-color: #3498db;
@@ -240,9 +241,8 @@ class SmartReminderWindow(QMainWindow):
         self.flower_combo.addItems(self.app.flower_types)
         self.flower_combo.setCurrentText(current_text)
 
-
     def show_add_flower_dialog(self):
-        """显示添加新鲜花种类的输入框"""
+        """添加新鲜花种类"""
         if self.new_flower_input.isHidden():
             self.new_flower_input.show()
             self.add_flower_button.setText("✓")
@@ -251,13 +251,8 @@ class SmartReminderWindow(QMainWindow):
             new_flower = self.new_flower_input.text().strip()
             if new_flower:
                 if self.app.add_flower_type(new_flower):
-                    # 添加到当前下拉框
                     self.flower_combo.addItem(new_flower)
                     self.flower_combo.setCurrentText(new_flower)
-                    
-                    # 通知主应用更新鲜花种类列表
-                    self.app.update_flower_types()
-                    
                     self.show_status(f"成功添加 {new_flower} 种类")
                 else:
                     self.show_status("鲜花种类已存在或无效", is_error=True)
@@ -267,48 +262,64 @@ class SmartReminderWindow(QMainWindow):
 
     def analyze_flower(self):
         """分析鲜花数据并获取推荐间隔"""
-        flower_name = self.flower_combo.currentText().strip()
-        if not flower_name:
+        print("智能提醒 - 分析鲜花数据")
+        current_flower = self.flower_combo.currentText().strip()
+        if not current_flower:
             self.show_status("错误：请选择鲜花种类！", is_error=True)
             return
         
         # 获取推荐间隔天数
-        interval = self.analyzer.get_recommended_interval(flower_name)
+        interval = self.analyzer.get_recommended_interval(current_flower)
         
-        # 清空并添加推荐结果
+        # 更新UI
         self.interval_combo.clear()
         self.interval_combo.addItem(f"{interval}天")
         
         # 显示成功信息
-        self.show_status(f"成功为 {flower_name} 分析推荐间隔！")
+        self.show_status(f"成功为 {current_flower} 分析推荐间隔！")
         
         # 添加数据点到分析器（模拟用户记录）
-        self.analyzer.add_data_point(flower_name, int(interval))
-    
+        self.analyzer.add_data_point(current_flower, int(interval))
+        print(f"智能提醒 - 成功为 {current_flower} 分析推荐间隔")
+
     def save_settings(self):
         """保存智能提醒设置"""
-        flower_name = self.flower_combo.currentText().strip()
-        if not flower_name:
-            self.show_status("错误：请选择鲜花种类！", is_error=True)
+        print("智能提醒-保存设置")
+        current_flower = self.flower_combo.currentText().strip()
+        if not current_flower:
+            self.show_status("错误: 请选择鲜花种类!", is_error=True)
             return
         
-        # 获取用户设置的开始时间和推荐间隔
+        # 获取用户设置
         start_time = self.time_edit.dateTime().toPyDateTime()
-        interval_days = float(self.interval_combo.currentText().rstrip('天'))
         
-        # 创建新的提醒系统
-        reminder_system = FlowerCareReminderSystem(self.app.reminder_manager, flower_name)
+        # 显示友好提示（包含实时时间）
+        set_time_str = start_time.strftime("%H:%M")
+        current_time_str = datetime.now().strftime("%H:%M")
+        self.show_status(f"设置已保存！将在{set_time_str}提醒\n当前时间: {current_time_str}", is_error=False)
+        
+        # 获取间隔天数
+        interval_text = self.interval_combo.currentText()
+        if '天' in interval_text:
+            interval_days = float(interval_text.replace('天', '').strip())
+        else:
+            interval_days = float(interval_text)
+        
+        # 创建提醒系统
+        from core.reminder_system import FlowerCareReminderSystem
+        reminder_system = FlowerCareReminderSystem(self.app.reminder_manager, current_flower)
         reminder_system.add_flower_reminder(
             start_time=start_time,
             interval_days=interval_days
         )
         
-        # 添加到提醒管理器（这会覆盖旧提醒）
-        self.app.reminder_manager.add_reminder(flower_name, reminder极ystem)
+        # 添加到提醒管理器
+        self.app.reminder_manager.add_reminder(current_flower, reminder_system)
         
         # 显示成功信息
-        self.show_status(f"成功为 {flower_name} 设置智能提醒！")
-        
+        self.show_status(f"成功为{current_flower}设置智能提醒!")
+        print(f"智能提醒-成功为{current_flower}设置智能提醒")
+    
     def show_status(self, message, is_error=False):
         """显示操作状态信息"""
         self.status_label.show()
@@ -346,23 +357,21 @@ class SmartReminderWindow(QMainWindow):
         self.main_window = ReminderChoiceWindow(self.app)
         self.main_window.show()
         self.hide()
-        
-    def mousePressEvent(self, event):
-        """鼠标按下事件"""
+    
+    # 窗口拖动功能
+    def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_start_position = event.globalPosition().toPoint()
             self.drag_window_position = self.pos()
             event.accept()
 
-    def mouseMoveEvent(self, event):
-        """鼠标移动事件"""
+    def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() == Qt.MouseButton.LeftButton and self.drag_start_position:
             delta = event.globalPosition().toPoint() - self.drag_start_position
             self.move(self.drag_window_position + delta)
             event.accept()
 
-    def mouseReleaseEvent(self, event):
-        """鼠标释放事件"""
+    def mouseReleaseEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_start_position = None
             self.drag_window_position = None

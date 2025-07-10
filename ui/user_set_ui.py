@@ -2,12 +2,12 @@ from PyQt6.QtWidgets import QMainWindow, QFrame, QLabel, QLineEdit, QPushButton,
 from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtGui import QMouseEvent
 from core.reminder_system import FlowerCareReminderSystem
+from datetime import datetime, timedelta  # 添加 datetime 和 timedelta 导入
 
 class UserSetWindow(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        self.app.add_window(self)
         self.setup_ui()
         self.drag_start_position = None
         self.drag_window_position = None
@@ -28,6 +28,7 @@ class UserSetWindow(QMainWindow):
                 background-color: #ecf0f1;
                 border-radius: 15px;
                 border: 1px solid #bdc3c7;
+                background-image: url(backgrounds/bg2.jpg);
             }
         """)
         self.setCentralWidget(central_widget)
@@ -79,7 +80,7 @@ class UserSetWindow(QMainWindow):
         title_label.setText("用户设置")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # 鲜花种类设置 - 改为选择框
+        # 鲜花种类设置 - 使用选择框
         flower_label = QLabel(frame)
         flower_label.setGeometry(50, 70, 101, 25)
         flower_label.setStyleSheet("""
@@ -91,6 +92,7 @@ class UserSetWindow(QMainWindow):
             }
         """)
         flower_label.setText("选择鲜花种类")
+        
         self.flower_combo = QComboBox(frame)
         self.flower_combo.setGeometry(160, 70, 171, 25)
         self.flower_combo.setStyleSheet("""
@@ -105,18 +107,19 @@ class UserSetWindow(QMainWindow):
         self.add_flower_button = QPushButton(frame)
         self.add_flower_button.setGeometry(340, 70, 31, 25)
         self.add_flower_button.setStyleSheet("""
-            QPushButton {
+            QPushButton {  # 修复这里：将 "Q极Button" 改为 "QPushButton"
                 background-color: #3498db;
                 color: white;
                 font: bold 10pt "等线";
                 border-radius: 3px;
             }
-            QPushButton:hover {
+            QPushButton:hover {  # 修复这里：将 "Q极Button" 改为 "QPushButton"
                 background-color: #2980b9;
             }
         """)
         self.add_flower_button.setText("+")
         self.add_flower_button.clicked.connect(self.show_add_flower_dialog)
+        
         
         # 添加新种类输入框
         self.new_flower_input = QLineEdit(frame)
@@ -130,10 +133,9 @@ class UserSetWindow(QMainWindow):
         self.new_flower_input.setPlaceholderText("输入新鲜花种类...")
         self.new_flower_input.hide()
         
-        
         # 时间设置
         time_label = QLabel(frame)
-        time_label.setGeometry(50, 140, 101, 25)  # 调整位置
+        time_label.setGeometry(50, 140, 101, 25)
         time_label.setStyleSheet("""
             *{
                 background-color: rgba(255, 255, 255, 0.7);
@@ -145,7 +147,7 @@ class UserSetWindow(QMainWindow):
         time_label.setText("起始时间:")
         
         self.time_edit = QDateTimeEdit(frame)
-        self.time_edit.setGeometry(160, 140, 171, 25)  # 调整位置
+        self.time_edit.setGeometry(160, 140, 171, 25)
         self.time_edit.setStyleSheet("""
             background-color: rgba(255, 255, 255, 0.85);
             border: 1px solid #bdc3c7;
@@ -156,7 +158,7 @@ class UserSetWindow(QMainWindow):
         
         # 间隔天数设置
         interval_label = QLabel(frame)
-        interval_label.setGeometry(50, 180, 101, 25)  # 调整位置
+        interval_label.setGeometry(50, 180, 101, 25)
         interval_label.setStyleSheet("""
             *{
                 background-color: rgba(255, 255, 255, 0.7);
@@ -168,7 +170,7 @@ class UserSetWindow(QMainWindow):
         interval_label.setText("间隔天数:")
         
         self.interval_combo = QComboBox(frame)
-        self.interval_combo.setGeometry(160, 180, 171, 25)  # 调整位置
+        self.interval_combo.setGeometry(160, 180, 171, 25)
         self.interval_combo.setStyleSheet("""
             background-color: rgba(255, 255, 255, 0.85);
             border: 1px solid #bdc3c7;
@@ -183,7 +185,7 @@ class UserSetWindow(QMainWindow):
             
         # 添加确定按钮
         self.confirm_button = QPushButton(frame)
-        self.confirm_button.setGeometry(200, 240, 101, 31)  # 调整位置
+        self.confirm_button.setGeometry(200, 240, 101, 31)
         self.confirm_button.setStyleSheet("""
             QPushButton {
                 background-color: #3498db;
@@ -202,7 +204,7 @@ class UserSetWindow(QMainWindow):
         self.confirm_button.setText("保存设置")
         self.confirm_button.clicked.connect(self.save_settings)
         
-        # 状态标签（用于显示操作结果）
+        # 状态标签
         self.status_label = QLabel(central_widget)
         self.status_label.setGeometry(150, 470, 500, 40)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -219,14 +221,26 @@ class UserSetWindow(QMainWindow):
     
     def save_settings(self):
         """保存用户设置并添加到提醒系统"""
-        flower_type = self.flower_combo.currentText().strip()  # 从组合框获取鲜花种类
+        print("[用户设置] 保存设置")
+        flower_type = self.flower_combo.currentText().strip()
         if not flower_type:
-            self.show_status("错误：请选择鲜花种类！", is_error=True)
+            self.show_status("错误: 请选择鲜花种类!", is_error=True)
             return
         
-        # 获取用户设置的开始时间和间隔天数
+        # 获取用户设置的开始时间
         start_time = self.time_edit.dateTime().toPyDateTime()
-        interval_days = int(self.interval_combo.currentText().rstrip('天'))
+        current_time = datetime.now()
+        
+        # 如果设置的是过去时间，显示提示
+        if start_time < current_time:
+            self.show_status("设置时间已过，将立即提醒您！", is_error=False)
+        
+        # 获取间隔天数
+        interval_text = self.interval_combo.currentText()
+        if '天' in interval_text:
+            interval_days = float(interval_text.replace('天', '').strip())
+        else:
+            interval_days = float(interval_text)
         
         # 创建新的提醒系统
         reminder_system = FlowerCareReminderSystem(self.app.reminder_manager, flower_type)
@@ -234,12 +248,14 @@ class UserSetWindow(QMainWindow):
             start_time=start_time,
             interval_days=interval_days
         )
-
-        # 添加到提醒管理器（这会覆盖旧提醒）
+        
+        # 添加到提醒管理器(这会覆盖旧提醒)
         self.app.reminder_manager.add_reminder(flower_type, reminder_system)
         
         # 显示成功信息
-        self.show_status(f"成功为 {flower_type} 设置养护提醒！")
+        self.show_status(f"成功为{flower_type}设置养护提醒!")
+        print(f"[用户设置]成功为{flower_type}设置养护提醒")
+        
     
     def show_status(self, message, is_error=False):
         """显示操作状态信息"""
@@ -299,14 +315,6 @@ class UserSetWindow(QMainWindow):
             self.drag_start_position = None
             self.drag_window_position = None
             event.accept()
-
-
-    def update_flower_list(self):
-        """更新鲜花种类下拉框"""
-        current_text = self.flower_combo.currentText()
-        self.flower_combo.clear()
-        self.flower_combo.addItems(self.app.flower_types)
-        self.flower_combo.setCurrentText(current_text)
 
     def show_add_flower_dialog(self):
         """显示添加新鲜花种类的输入框"""
